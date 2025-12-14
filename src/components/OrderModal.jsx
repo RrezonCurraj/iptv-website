@@ -48,20 +48,8 @@ const OrderModal = ({ plan, isOpen, onClose }) => {
     // Generate Reference Code
     const code = 'REF-' + Math.random().toString(36).substr(2, 9).toUpperCase();
     
-    // Simulate Processing Delay for UI
-    setTimeout(() => {
-      setReferenceCode(code);
-      setOrderDetails({
-        id: paypalOrder.id,
-        payer: paypalOrder.payer,
-        plan: plan,
-        contact: formData
-      });
-      setStep('success');
-      console.log("Order details displayed to user.");
-    }, 2000);
-
-    // CALL BACKEND TO SEND EMAILS
+    // 1. Send Email (Fire and Forget)
+    // We do NOT wait for this to finish to show success to the user.
     fetch('/api/send-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -73,9 +61,29 @@ const OrderModal = ({ plan, isOpen, onClose }) => {
         transactionId: paypalOrder.id
       })
     })
-    .then(res => res.json())
-    .then(data => console.log('Email API Response:', data))
-    .catch(err => console.error('Email API Error:', err));
+    .then(async (res) => {
+      const isJson = res.headers.get('content-type')?.includes('application/json');
+      const data = isJson ? await res.json() : null;
+      if (!res.ok) {
+        console.error('Email API Error:', (data && data.message) || res.status);
+      } else {
+        console.log('Email Sent Successfully:', data);
+      }
+    })
+    .catch(err => console.error('Email Network Error:', err));
+
+    // 2. Show Success Screen (Delayed slightly for UX)
+    setTimeout(() => {
+      setReferenceCode(code);
+      setOrderDetails({
+        id: paypalOrder.id,
+        payer: paypalOrder.payer,
+        plan: plan,
+        contact: formData
+      });
+      setStep('success');
+      console.log("Order details displayed to user.");
+    }, 1500);
   };
 
   const reset = () => {
@@ -166,6 +174,25 @@ const OrderModal = ({ plan, isOpen, onClose }) => {
                     <span className="text-blue-400 font-bold">€{plan.price}</span>
                   </div>
                 </div>
+
+                {/* TEST MODE ONLY: Simulate Success Button */}
+                {import.meta.env.VITE_PAYPAL_CLIENT_ID === 'test' && (
+                  <button
+                    onClick={() => {
+                        setStep('processing');
+                        handleOrderCompletion({
+                            id: 'TEST-' + Math.floor(Math.random() * 100000),
+                            payer: {
+                                name: { given_name: 'Test', surname: 'User' },
+                                email_address: formData.email
+                            }
+                        });
+                    }}
+                    className="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 rounded-lg mb-4"
+                  >
+                    🚧 TEST MODE: Simulate Success (No Payment)
+                  </button>
+                )}
 
                 <div className="text-center">
                   <PayPalButtons 
