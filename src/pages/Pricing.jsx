@@ -1,8 +1,25 @@
+import { useState } from 'react';
+import PricingComponent from '../components/Pricing';
+import OrderModal from '../components/OrderModal';
+
 const Pricing = () => {
+  const [isOrderOpen, setIsOrderOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+
+  const handleSelectPlan = (plan) => {
+    setSelectedPlan(plan);
+    setIsOrderOpen(true);
+  };
+
   return (
-    <div className="container mx-auto p-4 pt-10">
-      <h1 className="text-3xl font-bold mb-6">Subscription Plans</h1>
-      <p>Pricing details will go here...</p>
+    <div className="pt-10">
+      <PricingComponent onSelectPlan={handleSelectPlan} />
+      
+      <OrderModal 
+        isOpen={isOrderOpen} 
+        onClose={() => setIsOrderOpen(false)} 
+        plan={selectedPlan} 
+      />
     </div>
   );
 };

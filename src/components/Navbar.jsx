@@ -23,7 +23,7 @@ const Navbar = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 text-xl font-bold hover:text-blue-400 transition-colors">
             <Tv className="text-blue-500" />
-            <span>IPTV<span className="text-blue-500">Pro</span></span>
+            <span>Hyper<span className="text-blue-500">Cast</span></span>
           </Link>
 
           {/* Desktop Menu */}
@@ -37,9 +37,9 @@ const Navbar = () => {
                 {link.name}
               </Link>
             ))}
-            <a className="primary-button">
+            <Link to="/pricing" className="primary-button">
               Get Started
-            </a>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -56,7 +56,7 @@ const Navbar = () => {
 
       {/* Mobile Menu Dropdown */}
       {isMenuOpen && (
-        <div className="md:hidden bg-gray-800 border-t border-gray-700">
+        <div className="md:hidden absolute top-16 left-0 w-full bg-gray-800 border-t border-gray-700 shadow-lg">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             {navLinks.map((link) => (
               <Link
@@ -68,9 +68,9 @@ const Navbar = () => {
                 {link.name}
               </Link>
             ))}
-            <a className="primary-button">
+            <Link to="/pricing" className="primary-button" onClick={() => setIsMenuOpen(false)}>
               Get Started
-            </a>
+            </Link>
           </div>
         </div>
       )}
