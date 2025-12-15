@@ -272,7 +272,8 @@ const OrderModal = ({ plan, isOpen, onClose }) => {
                 <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-6">
                   <p className="text-sm text-blue-200">
                     <strong>Order sent to dispatch!</strong><br/>
-                    Check your email <b>{formData.email}</b>. Your playlist will arrive shortly.
+                    Check your email <b>{formData.email}</b>. Your playlist will arrive shortly.<br/>
+                    <span className="text-blue-100/70 text-xs">(Please check your Spam/Junk folder if you don't see it)</span>
                   </p>
                 </div>
 
