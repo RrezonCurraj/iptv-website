@@ -3,7 +3,7 @@ import { Check } from 'lucide-react';
 const plans = [
   {
     duration: '1 Month',
-    price: '1',
+    price: '15',
     features: ['Stable Performance', 'SD, HD, FHD, 4K', '+19K Live TVs', '+90K VODs', 'Sports, News, Shows...', 'Supports all devices', 'EPG & Catch-Up', '7/7 Support'],
     recommended: false
   },

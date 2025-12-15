@@ -7,6 +7,12 @@ const OrderModal = ({ plan, isOpen, onClose }) => {
   const [formData, setFormData] = useState({ email: '', phone: '' });
   const [referenceCode, setReferenceCode] = useState('');
   const [orderDetails, setOrderDetails] = useState(null);
+  const [debugLogs, setDebugLogs] = useState([]);
+
+  const addLog = (msg) => {
+    console.log(msg);
+    setDebugLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${msg}`]);
+  };
 
   if (!isOpen || !plan) return null;
 
@@ -18,6 +24,7 @@ const OrderModal = ({ plan, isOpen, onClose }) => {
 
   // PayPal: Create Order
   const createOrder = (data, actions) => {
+    addLog("Creating Order...");
     return actions.order.create({
       purchase_units: [
         {
@@ -28,36 +35,38 @@ const OrderModal = ({ plan, isOpen, onClose }) => {
           },
         },
       ],
+    }).then((orderId) => {
+        addLog(`Order Created. ID: ${orderId}`);
+        return orderId;
+    }).catch(err => {
+        addLog(`Create Error: ${err}`);
+        throw err;
     });
   };
 
   // PayPal: On Approve (Success)
   const onApprove = async (data, actions) => {
+    addLog("User Approved. Capturing funds...");
     setStep('processing');
     try {
         const order = await actions.order.capture();
+        addLog(`Capture Success! Status: ${order.status}`);
         handleOrderCompletion(order);
     } catch (error) {
+        addLog(`Capture Failed: ${error.message}`);
         console.error("PayPal Capture Error:", error);
-        // Safety Net 2.0: Force success to prevent UI sticking.
-        // We log the error in console for debugging but show Success to user.
-        handleOrderCompletion({ 
-            id: data.orderID || 'ERR-CAPTURED', 
-            payer: { email_address: formData.email },
-            status: 'COMPLETED_WITH_ERROR',
-            errorDetails: error.message || 'Unknown'
-        });
+        alert("Payment Failed. Check Debug Logs below.");
     }
   };
 
   const handleOrderCompletion = (paypalOrder) => {
+    addLog("Finalizing Order...");
     console.log("PayPal Order Captured:", paypalOrder);
     
     // Generate Reference Code
     const code = 'REF-' + Math.random().toString(36).substr(2, 9).toUpperCase();
     
     // 1. Send Email (Fire and Forget)
-    // We do NOT wait for this to finish to show success to the user.
     fetch('/api/send-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -73,14 +82,19 @@ const OrderModal = ({ plan, isOpen, onClose }) => {
       const isJson = res.headers.get('content-type')?.includes('application/json');
       const data = isJson ? await res.json() : null;
       if (!res.ok) {
+        addLog(`Email API Error: ${res.status}`);
         console.error('Email API Error:', (data && data.message) || res.status);
       } else {
+        addLog("Email Request Sent.");
         console.log('Email Sent Successfully:', data);
       }
     })
-    .catch(err => console.error('Email Network Error:', err));
+    .catch(err => {
+        addLog(`Email Network Error: ${err}`);
+        console.error('Email Network Error:', err)
+    });
 
-    // 2. Show Success Screen (Delayed slightly for UX)
+    // 2. Show Success Screen
     setTimeout(() => {
       setReferenceCode(code);
       setOrderDetails({
@@ -90,7 +104,7 @@ const OrderModal = ({ plan, isOpen, onClose }) => {
         contact: formData
       });
       setStep('success');
-      console.log("Order details displayed to user.");
+      addLog("Step changed to Success.");
     }, 1500);
   };
 
@@ -98,6 +112,7 @@ const OrderModal = ({ plan, isOpen, onClose }) => {
     setStep('form');
     setFormData({ email: '', phone: '' });
     setOrderDetails(null);
+    setDebugLogs([]); // Clear logs
     onClose();
   };
 
@@ -105,11 +120,10 @@ const OrderModal = ({ plan, isOpen, onClose }) => {
     <PayPalScriptProvider options={{ 
       "client-id": import.meta.env.VITE_PAYPAL_CLIENT_ID, 
       currency: "EUR",
-      intent: "capture",
-      components: "buttons"
+      intent: "capture"
     }}>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-        <div className="bg-gray-800 rounded-2xl w-full max-w-md border border-gray-700 shadow-2xl overflow-hidden relative">
+        <div className="bg-gray-800 rounded-2xl w-full max-w-md border border-gray-700 shadow-2xl overflow-hidden relative flex flex-col max-h-[90vh]">
           {/* Close Button */}
           <button 
             onClick={reset}
@@ -118,7 +132,7 @@ const OrderModal = ({ plan, isOpen, onClose }) => {
             <X size={24} />
           </button>
 
-          <div className="p-6">
+          <div className="p-6 overflow-y-auto">
             
             {/* STEP 1: FORM */}
             {step === 'form' && (
@@ -188,25 +202,6 @@ const OrderModal = ({ plan, isOpen, onClose }) => {
                   </div>
                 </div>
 
-                {/* TEST MODE ONLY: Simulate Success Button */}
-                {import.meta.env.VITE_PAYPAL_CLIENT_ID === 'test' && (
-                  <button
-                    onClick={() => {
-                        setStep('processing');
-                        handleOrderCompletion({
-                            id: 'TEST-' + Math.floor(Math.random() * 100000),
-                            payer: {
-                                name: { given_name: 'Test', surname: 'User' },
-                                email_address: formData.email
-                            }
-                        });
-                    }}
-                    className="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 rounded-lg mb-4"
-                  >
-                    🚧 TEST MODE: Simulate Success (No Payment)
-                  </button>
-                )}
-
                 <div className="text-center">
                   <PayPalButtons 
                     style={{ layout: "vertical", color: "blue", shape: "rect", label: "pay" }}
@@ -214,8 +209,8 @@ const OrderModal = ({ plan, isOpen, onClose }) => {
                     createOrder={createOrder}
                     onApprove={onApprove}
                     onError={(err) => {
+                      addLog(`PayPal onError: ${err}`);
                       console.error("PayPal Error:", err);
-                      // Handle error (optional UI update)
                     }}
                   />
                   <p className="text-xs text-gray-500 mt-4">
@@ -276,6 +271,16 @@ const OrderModal = ({ plan, isOpen, onClose }) => {
                   Close
                 </button>
               </div>
+            )}
+
+            {/* DEBUG LOGGING AREA - ONLY FOR TROUBLESHOOTING */}
+            {debugLogs.length > 0 && (
+                <div className="mt-4 p-2 bg-black text-green-400 font-mono text-xs overflow-x-auto rounded border border-gray-700 max-h-32">
+                    <div className="font-bold border-b border-gray-700 mb-1">DEBUG LOGS:</div>
+                    {debugLogs.map((log, i) => (
+                        <div key={i}>{log}</div>
+                    ))}
+                </div>
             )}
           </div>
         </div>
