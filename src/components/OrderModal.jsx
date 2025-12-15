@@ -39,14 +39,7 @@ const OrderModal = ({ plan, isOpen, onClose }) => {
         handleOrderCompletion(order);
     } catch (error) {
         console.error("PayPal Capture Error:", error);
-        // Safety Net: Force success even if PayPal API times out or throws opaque error
-        // This ensures the user sees 'Success' and we can check the payment manually later.
-        handleOrderCompletion({ 
-            id: data.orderID || 'ERR-CAPTURED', 
-            payer: { email_address: formData.email },
-            status: 'COMPLETED_WITH_ERROR',
-            errorDetails: error.message || 'Unknown'
-        });
+        alert("PayPal Error Details: " + JSON.stringify(error, null, 2)); // Show Real Error
     }
   };
 
