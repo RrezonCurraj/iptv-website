@@ -31,7 +31,7 @@ const OrderModal = ({ plan, isOpen, onClose }) => {
           description: `${plan.duration} IPTV Subscription`,
           amount: {
             value: plan.price,
-            currency_code: "EUR"
+            currency_code: "USD" // Changed to USD for Sandbox
           },
         },
       ],
@@ -136,8 +136,8 @@ const OrderModal = ({ plan, isOpen, onClose }) => {
   return (
     <PayPalScriptProvider options={{ 
       "client-id": import.meta.env.VITE_PAYPAL_CLIENT_ID, 
-      currency: "EUR",
-      intent: "capture"
+      currency: "USD",
+      intent: "capture" // Currency must match createOrder
     }}>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
         <div className="bg-gray-800 rounded-2xl w-full max-w-md border border-gray-700 shadow-2xl overflow-hidden relative flex flex-col max-h-[90vh]">
