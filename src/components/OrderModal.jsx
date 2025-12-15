@@ -39,13 +39,7 @@ const OrderModal = ({ plan, isOpen, onClose }) => {
         handleOrderCompletion(order);
     } catch (error) {
         console.error("PayPal Capture Error:", error);
-        // If capture fails (e.g. network timeout) but likely processed,
-        // we force success to prevent UI sticking.
-        handleOrderCompletion({ 
-            id: data.orderID || 'ERR-CAPTURED', 
-            payer: { email_address: formData.email },
-            status: 'COMPLETED_WITH_ERROR' 
-        });
+        alert("Payment Error Details: " + JSON.stringify(error, null, 2));
     }
   };
 
