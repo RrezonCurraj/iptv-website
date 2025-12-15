@@ -21,6 +21,9 @@ const OrderModal = ({ plan, isOpen, onClose }) => {
       return;
     }
     setStep('payment');
+    // Generate reference code immediately so it's ready for PayPal
+    const code = 'REF-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+    setReferenceCode(code);
   };
 
   // Helper to update form data and clear error
@@ -34,7 +37,7 @@ const OrderModal = ({ plan, isOpen, onClose }) => {
     return actions.order.create({
       purchase_units: [
         {
-          description: `${plan.duration} IPTV Subscription`,
+          description: referenceCode,
           amount: {
             value: plan.price,
             currency_code: "EUR"
@@ -75,7 +78,8 @@ const OrderModal = ({ plan, isOpen, onClose }) => {
   const handleOrderCompletion = (paypalOrder) => {
     console.log("Finalizing Order:", paypalOrder);
     
-    const code = 'REF-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+    // Use the reference code that was generated for the payment
+    const code = referenceCode;
     
     fetch('/api/send-email', {
       method: 'POST',
@@ -102,7 +106,7 @@ const OrderModal = ({ plan, isOpen, onClose }) => {
     });
 
     setTimeout(() => {
-      setReferenceCode(code);
+      // setReferenceCode(code); // Already set
       setOrderDetails({
         id: paypalOrder.id,
         payer: paypalOrder.payer,
@@ -217,6 +221,7 @@ const OrderModal = ({ plan, isOpen, onClose }) => {
 
                 <div className="text-center">
                   <PayPalButtons 
+                    forceReRender={[plan.price, plan.duration, referenceCode]}
                     style={{ layout: "vertical", color: "blue", shape: "rect", label: "pay" }}
                     fundingSource="paypal"
                     createOrder={createOrder}
