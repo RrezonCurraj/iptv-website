@@ -47,7 +47,8 @@ const OrderModal = ({ plan, isOpen, onClose }) => {
   // PayPal: On Approve (Success)
   const onApprove = async (data, actions) => {
     addLog("User Approved. Capturing funds...");
-    setStep('processing');
+    // CRITICAL FIX: Do NOT setStep('processing') here. 
+    // It unmounts the PayPal buttons while capture is pending, causing "Window closed" error.
     try {
         const order = await actions.order.capture();
         addLog(`Capture Success! Status: ${order.status}`);
@@ -55,7 +56,7 @@ const OrderModal = ({ plan, isOpen, onClose }) => {
     } catch (error) {
         addLog(`Capture Failed: ${error.message}`);
         console.error("PayPal Capture Error:", error);
-        alert("Payment Failed. Check Debug Logs below.");
+        alert(`Payment Error: ${error.message}\nPlease try again.`);
     }
   };
 
