@@ -22,7 +22,9 @@ const Hero = () => {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
           </span>
-          <span className="text-blue-300 text-sm font-medium tracking-wide">#1 Rated IPTV Service</span>
+          <span className="text-blue-300 text-sm font-medium tracking-wide">
+            {import.meta.env.VITE_HERO_BADGE || "#1 Rated SaaS Platform"}
+          </span>
         </div>
 
         {/* Main Heading */}
@@ -35,8 +37,7 @@ const Hero = () => {
 
         {/* Subheading */}
         <p className="text-xl md:text-2xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-          Access over <strong>20,000+ Live Channels</strong> & VODs in 4K/FHD. 
-          Buffer-free technology designed for sports and movies.
+           {import.meta.env.VITE_HERO_DESC || "Experience the future of digital content delivery. Scalable, secure, and built for performance."}
         </p>
 
         {/* CTA Buttons */}
