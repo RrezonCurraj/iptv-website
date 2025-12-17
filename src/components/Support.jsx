@@ -1,24 +1,34 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react'; // Added useRef
 import { Send, MessageCircle, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
+import ReCAPTCHA from "react-google-recaptcha"; // Import ReCAPTCHA
 
 const Support = () => {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [status, setStatus] = useState('idle'); // idle, sending, success, error
+  const [captchaToken, setCaptchaToken] = useState(null); // State for captcha token
+  const recaptchaRef = useRef(null); // Ref for recaptcha to reset it
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!captchaToken) {
+        alert("Please complete the CAPTCHA check.");
+        return;
+    }
+
     setStatus('sending');
 
     try {
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, captchaToken }), // Include token
       });
 
       if (res.ok) {
         setStatus('success');
         setFormData({ name: '', email: '', message: '' });
+        setCaptchaToken(null); // Clear token
+        if (recaptchaRef.current) recaptchaRef.current.reset(); // Reset widget
         setTimeout(() => setStatus('idle'), 5000); // Reset after 5s
       } else {
         setStatus('error');
@@ -95,6 +105,16 @@ const Support = () => {
                     ></textarea>
                   </div>
 
+                   {/* reCAPTCHA */}
+                   <div className="flex justify-center py-2">
+                    <ReCAPTCHA
+                        ref={recaptchaRef}
+                        sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+                        onChange={(token) => setCaptchaToken(token)}
+                        theme="dark"
+                    />
+                  </div>
+
                   {status === 'error' && (
                     <div className="flex items-center gap-2 text-red-500 bg-red-500/10 p-4 rounded-lg border border-red-500/20">
                       <AlertCircle size={20} />
@@ -104,7 +124,7 @@ const Support = () => {
 
                   <button 
                     type="submit" 
-                    disabled={status === 'sending'}
+                    disabled={status === 'sending' || !captchaToken} // Disable if no token
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {status === 'sending' ? (
@@ -123,7 +143,7 @@ const Support = () => {
               )}
             </div>
 
-            {/* Telegram / Info - HIDDEN as requested */}
+            {/* Telegram / Info - HIDDEN */}
           </div>
         </div>
       </div>

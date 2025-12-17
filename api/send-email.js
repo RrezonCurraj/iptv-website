@@ -9,13 +9,12 @@ export default async function handler(req, res) {
   const { email, plan, price, referenceCode, transactionId } = req.body;
   
   // Initialize Resend with your API Key
-  // IMPORTANT: You must add RESEND_API_KEY to your Vercel Environment Variables
   const resend = new Resend(process.env.RESEND_API_KEY);
 
-  // The email address you verified in Resend (e.g., support@hypercast.com)
+
   const SENDER_EMAIL = 'support@hypercast.store'; 
-  // If your domain isn't verified yet, you can test using: 'onboarding@resend.dev'
-  // But that ONLY sends to the email you used to sign up for Resend.
+
+
 
   try {
     // 1. Email to Customer
